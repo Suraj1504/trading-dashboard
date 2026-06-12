@@ -17,20 +17,18 @@
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; padding: 20px; min-height: 100vh; }
 
-  /* TOKEN SCREEN */
-  .token-screen { max-width: 460px; margin: 80px auto; }
+  .token-screen { max-width: 460px; margin: 60px auto; }
   .token-screen h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-  .token-screen p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
-  .token-screen ol { color: var(--muted); font-size: 12px; line-height: 1.9; padding-left: 18px; margin-bottom: 20px; }
+  .token-screen p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+  .token-screen ol { color: var(--muted); font-size: 12px; line-height: 2; padding-left: 18px; margin-bottom: 20px; }
   .token-screen ol a { color: var(--gold); }
   .token-input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; margin-bottom: 10px; }
   .token-input:focus { border-color: var(--gold); }
   .token-btn { width: 100%; padding: 10px; background: var(--gold); color: #000; font-weight: 600; font-size: 13px; border: none; border-radius: var(--radius-sm); cursor: pointer; }
   .token-btn:hover { opacity: 0.9; }
-  .token-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
-  .token-note { font-size: 11px; color: var(--hint); margin-top: 10px; }
+  .token-error { color: var(--red); font-size: 12px; margin-top: 10px; padding: 10px; background: var(--red-bg); border-radius: var(--radius-sm); display: none; }
+  .token-note { font-size: 11px; color: var(--hint); margin-top: 10px; line-height: 1.6; }
 
-  /* DASHBOARD */
   #dashboard { display: none; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .header-left { display: flex; align-items: center; gap: 10px; }
@@ -77,7 +75,6 @@
   .card-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
   .card-row:last-child { border-bottom: none; }
   .card-row span:first-child { color: var(--muted); }
-  .card-row span:last-child { font-weight: 500; }
 
   .pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
   .pill-green { background: var(--green-bg); color: var(--green); }
@@ -91,7 +88,7 @@
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover td { background: var(--surface2); }
 
-  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); line-height: 1.8; }
   .loading-msg { text-align: center; padding: 40px; color: var(--muted); }
   .loading-msg .spinner { width: 24px; height: 24px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
   .last-updated { font-size: 11px; color: var(--hint); margin-top: 16px; text-align: right; }
@@ -104,25 +101,25 @@
 </head>
 <body>
 
-<!-- TOKEN SETUP SCREEN -->
 <div id="tokenScreen" class="token-screen">
-  <div style="font-size:28px;margin-bottom:16px">📊</div>
+  <div style="font-size:32px;margin-bottom:16px">📊</div>
   <h2>Connect to Notion</h2>
-  <p>To pull live trade data from your Notion journals, enter your Notion Internal Integration Token below. It's stored only in your browser — never sent anywhere else.</p>
+  <p>Enter your Notion Internal Integration Token to pull live trade data from your journals.</p>
   <ol>
     <li>Go to <a href="https://www.notion.so/profile/integrations" target="_blank">notion.so/profile/integrations</a></li>
-    <li>Click <strong>+ New integration</strong></li>
-    <li>Name it <strong>Trading Dashboard</strong>, click Save</li>
-    <li>Copy the <strong>Internal Integration Token</strong> (starts with <code>ntn_</code> or <code>secret_</code>)</li>
-    <li>Make sure the integration is <strong>connected to your Trading Hub page</strong> in Notion (open page → ••• → Connections → Add)</li>
+    <li>Click <strong>+ New integration</strong> → name it <strong>Trading Dashboard</strong> → Save</li>
+    <li>Copy the token shown (starts with <code>ntn_</code>)</li>
+    <li>In Notion, open each of your 3 journals → click <strong>···</strong> top right → <strong>Connections</strong> → add <strong>Trading Dashboard</strong></li>
+    <li>Paste the token below and connect</li>
   </ol>
-  <input type="password" class="token-input" id="tokenInput" placeholder="ntn_xxxxxxxxxxxxxxxxxxxx" />
+  <input type="password" class="token-input" id="tokenInput" placeholder="ntn_xxxxxxxxxxxxxxxxxxxxxxxx" />
   <button class="token-btn" onclick="saveToken()">Connect & Load Dashboard</button>
-  <div class="token-error" id="tokenError">Invalid token or connection failed. Please check and try again.</div>
-  <div class="token-note">Your token is saved in localStorage and never leaves your browser.</div>
+  <div class="token-error" id="tokenError"></div>
+  <div class="token-note">
+    ⚠️ Your token is stored only in your browser's localStorage. It is never sent to any server other than Notion's official API.
+  </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="header">
     <div class="header-left">
@@ -134,10 +131,13 @@
     </div>
     <div class="header-right">
       <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 4v6h6M23 20v-6h-6"/>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+        </svg>
         Refresh
       </button>
-      <button class="signout-btn" onclick="signOut()" title="Disconnect">✕ Disconnect</button>
+      <button class="signout-btn" onclick="signOut()">✕ Disconnect</button>
     </div>
   </div>
 
@@ -149,7 +149,7 @@
   </div>
 
   <div id="dashContent">
-    <div class="loading-msg"><div class="spinner"></div>Loading trade data...</div>
+    <div class="loading-msg"><div class="spinner"></div>Loading...</div>
   </div>
   <div class="last-updated" id="lastUpdated"></div>
 </div>
@@ -165,34 +165,31 @@ const ACCOUNTS = [
   { id: 'live', label: 'Personal Live' },
   { id: 'prop', label: 'Prop Firm' }
 ];
+// CORS proxy — forwards requests to Notion API with proper headers
+const PROXY = 'https://corsproxy.io/?url=';
 
 let cache = {};
 let activeTab = 'all';
 let notionToken = '';
 
-// ── Auth ──────────────────────────────────────────────────────────────
 function init() {
-  const saved = localStorage.getItem('notion_token');
-  if (saved) {
-    notionToken = saved;
-    showDashboard();
-    loadAll();
-  }
+  const saved = localStorage.getItem('nd_token');
+  if (saved) { notionToken = saved; showDashboard(); loadAll(); }
 }
 
 function saveToken() {
   const val = document.getElementById('tokenInput').value.trim();
   if (!val) return;
   notionToken = val;
-  localStorage.setItem('notion_token', val);
-  document.getElementById('tokenError').style.display = 'none';
+  localStorage.setItem('nd_token', val);
   showDashboard();
   loadAll();
 }
 
 function signOut() {
-  localStorage.removeItem('notion_token');
+  localStorage.removeItem('nd_token');
   notionToken = '';
+  cache = {};
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('tokenScreen').style.display = 'block';
   document.getElementById('tokenInput').value = '';
@@ -203,14 +200,23 @@ function showDashboard() {
   document.getElementById('dashboard').style.display = 'block';
 }
 
-// ── Notion API ────────────────────────────────────────────────────────
-async function fetchAllPages(dbId) {
-  const url = `https://api.notion.com/v1/databases/${dbId}/query`;
-  let results = [], cursor = undefined;
+function showError(msg) {
+  const el = document.getElementById('tokenError');
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+// ── Notion API via CORS proxy ─────────────────────────────────────────
+async function queryDB(dbId) {
+  const targetUrl = `https://api.notion.com/v1/databases/${dbId}/query`;
+  const proxyUrl  = PROXY + encodeURIComponent(targetUrl);
+  let results = [], cursor;
+
   do {
     const body = { page_size: 100 };
     if (cursor) body.start_cursor = cursor;
-    const resp = await fetch(url, {
+
+    const resp = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionToken}`,
@@ -219,46 +225,42 @@ async function fetchAllPages(dbId) {
       },
       body: JSON.stringify(body)
     });
+
     if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
       if (resp.status === 401) {
-        document.getElementById('tokenError').style.display = 'block';
+        showError('Invalid token. Please disconnect and re-enter your Notion token.');
         signOut();
+      } else if (resp.status === 403) {
+        showError(`Access denied for database ${dbId}. Make sure your integration is connected to all 3 journals in Notion (··· → Connections).`);
       }
-      throw new Error(`Notion API error: ${resp.status}`);
+      throw new Error(err.message || `HTTP ${resp.status}`);
     }
+
     const data = await resp.json();
-    results = results.concat(data.results);
+    results = results.concat(data.results || []);
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
+
   return results;
 }
 
 function parsePages(pages) {
   return pages.map(p => {
     const props = p.properties || {};
-    const get = (key, type) => {
-      const prop = props[key];
-      if (!prop) return null;
-      if (type === 'select') return prop.select?.name || null;
-      if (type === 'multi_select') return (prop.multi_select || []).map(o => o.name);
-      if (type === 'number') return prop.number || null;
-      if (type === 'title') return prop.title?.[0]?.plain_text || null;
-      return null;
-    };
+    const sel  = k => props[k]?.select?.name || null;
+    const msel = k => (props[k]?.multi_select || []).map(o => o.name);
+    const num  = k => props[k]?.number ?? null;
+    const titl = k => props[k]?.title?.[0]?.plain_text || null;
     return {
-      instrument:  get('Instrument', 'title'),
-      result:      get('Result', 'select'),
-      session:     get('Session', 'select'),
-      plannedRR:   get('Planned (RR)', 'number'),
-      ruleBroken:  get('Rule Broken', 'multi_select') || [],
-      setup:       get('A+ Setup?', 'select'),
-      lotSize:     get('Lot Size', 'number'),
-      entry:       get('Entry', 'number'),
-      exit:        get('Exit', 'number'),
-      sl:          get('SL', 'number'),
-      tp:          get('TP', 'number'),
+      instrument: titl('Instrument'),
+      result:     sel('Result'),
+      session:    sel('Session'),
+      plannedRR:  num('Planned (RR)'),
+      ruleBroken: msel('Rule Broken'),
+      setup:      sel('A+ Setup?'),
     };
-  }).filter(t => t.result); // only logged trades
+  }).filter(t => t.result);
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────
@@ -269,30 +271,25 @@ function calcStats(trades) {
   const losses = trades.filter(t => t.result === 'Loss').length;
   const be     = trades.filter(t => t.result === 'Breakeven').length;
   const winRate = Math.round((wins / total) * 100);
-
-  const rrs = trades.map(t => parseFloat(t.plannedRR)).filter(r => r > 0);
+  const rrs    = trades.map(t => parseFloat(t.plannedRR)).filter(r => r > 0);
   const bestRR = rrs.length ? Math.max(...rrs).toFixed(1) : '—';
   const avgRR  = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(1) : '—';
-
-  const count = arr => { const o={}; arr.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
-  const top   = obj  => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
-
+  const count  = arr => { const o={}; arr.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
+  const top    = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
   const sessions    = count(trades.map(t=>t.session));
   const instruments = count(trades.map(t=>t.instrument));
-  const setups      = count(trades.map(t=>t.setup));
   const rules       = count(trades.flatMap(t=>t.ruleBroken||[]));
-  const totalBreaks = Object.values(rules).reduce((a,b)=>a+b,0);
-
+  const setups      = count(trades.map(t=>t.setup));
   return { total, wins, losses, be, winRate, bestRR, avgRR,
-    topSession: top(sessions), topPair: top(instruments),
-    topSetup: top(setups), topRule: top(rules),
-    totalBreaks, rules, sessions, instruments };
+    topPair: top(instruments), topSession: top(sessions), topSetup: top(setups),
+    totalBreaks: Object.values(rules).reduce((a,b)=>a+b,0),
+    rules, sessions, instruments };
 }
 
 // ── Render ────────────────────────────────────────────────────────────
 function renderSingle(stats, label) {
   if (!stats || stats.total === 0)
-    return `<div class="empty">No trades logged yet for <strong>${label}</strong>.<br>Start logging trades to see stats here.</div>`;
+    return `<div class="empty">No trades logged yet for <strong>${label}</strong>.<br>Log your first trade in Notion to see stats here.</div>`;
 
   const wrClass = stats.winRate >= 55 ? 'green' : stats.winRate >= 45 ? 'amber' : 'red';
   const wPct = ((stats.wins/stats.total)*100).toFixed(1);
@@ -328,11 +325,11 @@ function renderSingle(stats, label) {
     <div class="two-col">
       <div class="card">
         <div class="card-title">Top instruments</div>
-        ${topPairs.length ? topPairs.map(([p,c])=>`<div class="card-row"><span>${p}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') : '<div class="card-row"><span>No data</span><span>—</span></div>'}
+        ${topPairs.length ? topPairs.map(([p,c])=>`<div class="card-row"><span>${p}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') : '<div class="card-row"><span>No data yet</span><span>—</span></div>'}
       </div>
       <div class="card">
         <div class="card-title">Session breakdown</div>
-        ${Object.entries(stats.sessions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`<div class="card-row"><span>${s}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') || '<div class="card-row"><span>No data</span><span>—</span></div>'}
+        ${Object.entries(stats.sessions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`<div class="card-row"><span>${s}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') || '<div class="card-row"><span>No data yet</span><span>—</span></div>'}
       </div>
       <div class="card">
         <div class="card-title">Setup quality</div>
@@ -342,31 +339,33 @@ function renderSingle(stats, label) {
       </div>
       <div class="card">
         <div class="card-title">Most broken rules</div>
-        ${topRules.length ? topRules.map(([r,c])=>`<div class="card-row"><span title="${r}">${r.length>22?r.slice(0,22)+'…':r}</span><span class="pill pill-red">${c}x</span></div>`).join('') : '<div class="card-row"><span>No rules broken</span><span class="pill pill-green">Clean ✓</span></div>'}
+        ${topRules.length
+          ? topRules.map(([r,c])=>`<div class="card-row"><span title="${r}">${r.length>22?r.slice(0,22)+'…':r}</span><span class="pill pill-red">${c}x</span></div>`).join('')
+          : '<div class="card-row"><span>No rules broken</span><span class="pill pill-green">Clean ✓</span></div>'}
       </div>
     </div>`;
 }
 
 function renderAll() {
   const all = Object.values(cache).flat();
-  const combined = calcStats(all);
-  let html = '';
+  const c   = calcStats(all);
+  let html  = '';
 
-  if (combined && combined.total > 0) {
-    const wrClass = combined.winRate >= 55 ? 'green' : combined.winRate >= 45 ? 'amber' : 'red';
-    const wPct = ((combined.wins/combined.total)*100).toFixed(1);
-    const lPct = ((combined.losses/combined.total)*100).toFixed(1);
-    const bPct = ((combined.be/combined.total)*100).toFixed(1);
+  if (c && c.total > 0) {
+    const wrClass = c.winRate >= 55 ? 'green' : c.winRate >= 45 ? 'amber' : 'red';
+    const wPct = ((c.wins/c.total)*100).toFixed(1);
+    const lPct = ((c.losses/c.total)*100).toFixed(1);
+    const bPct = ((c.be/c.total)*100).toFixed(1);
     html += `
       <div class="stats-grid">
-        <div class="stat"><div class="stat-label">Total Trades</div><div class="stat-value">${combined.total}</div></div>
-        <div class="stat"><div class="stat-label">Win Rate</div><div class="stat-value ${wrClass}">${combined.winRate}%</div></div>
-        <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${combined.wins}</div></div>
-        <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${combined.losses}</div></div>
-        <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${combined.be}</div></div>
-        <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${combined.bestRR}R</div></div>
-        <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${combined.totalBreaks>0?'red':'green'}">${combined.totalBreaks}</div></div>
-        <div class="stat"><div class="stat-label">Top Pair</div><div class="stat-value sm">${combined.topPair}</div></div>
+        <div class="stat"><div class="stat-label">Total Trades</div><div class="stat-value">${c.total}</div></div>
+        <div class="stat"><div class="stat-label">Win Rate</div><div class="stat-value ${wrClass}">${c.winRate}%</div></div>
+        <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${c.wins}</div></div>
+        <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${c.losses}</div></div>
+        <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${c.be}</div></div>
+        <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${c.bestRR}R</div></div>
+        <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${c.totalBreaks>0?'red':'green'}">${c.totalBreaks}</div></div>
+        <div class="stat"><div class="stat-label">Top Pair</div><div class="stat-value sm">${c.topPair}</div></div>
       </div>
       <div class="winbar-section">
         <div class="section-label">Combined result breakdown</div>
@@ -376,9 +375,9 @@ function renderAll() {
           <div class="winbar-be" style="width:${bPct}%"></div>
         </div>
         <div class="winbar-legend">
-          <div class="leg"><div class="dot" style="background:#22c97a"></div>${combined.wins} Win</div>
-          <div class="leg"><div class="dot" style="background:#f05252"></div>${combined.losses} Loss</div>
-          <div class="leg"><div class="dot" style="background:#f5a623"></div>${combined.be} BE</div>
+          <div class="leg"><div class="dot" style="background:#22c97a"></div>${c.wins} Win</div>
+          <div class="leg"><div class="dot" style="background:#f05252"></div>${c.losses} Loss</div>
+          <div class="leg"><div class="dot" style="background:#f5a623"></div>${c.be} BE</div>
         </div>
       </div>`;
   }
@@ -402,8 +401,7 @@ function renderAll() {
         <td style="color:#22c97a">${s.wins}</td>
         <td style="color:#f05252">${s.losses}</td>
         <td style="color:#f5a623">${s.be}</td>
-        <td>${s.bestRR}R</td>
-        <td>${s.avgRR}R</td>
+        <td>${s.bestRR}R</td><td>${s.avgRR}R</td>
         <td style="color:${s.totalBreaks>0?'#f05252':'#22c97a'}">${s.totalBreaks}</td>
         <td>${s.topPair}</td>
       </tr>`;
@@ -432,26 +430,30 @@ function switchTab(tab, el) {
 async function loadAll() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading');
-  document.getElementById('dashContent').innerHTML = '<div class="loading-msg"><div class="spinner"></div>Fetching live data from Notion...</div>';
+  document.getElementById('dashContent').innerHTML =
+    '<div class="loading-msg"><div class="spinner"></div>Fetching live data from Notion...</div>';
 
-  const results = await Promise.allSettled(
-    ACCOUNTS.map(async acc => {
-      const pages = await fetchAllPages(DB_IDS[acc.id]);
+  let anySuccess = false;
+  await Promise.all(ACCOUNTS.map(async acc => {
+    try {
+      const pages = await queryDB(DB_IDS[acc.id]);
       cache[acc.id] = parsePages(pages);
-    })
-  );
+      anySuccess = true;
+    } catch(e) {
+      cache[acc.id] = [];
+      console.error(acc.label, e.message);
+    }
+  }));
 
-  // check for errors
-  const failed = results.filter(r => r.status === 'rejected');
-  if (failed.length === ACCOUNTS.length) {
-    document.getElementById('dashContent').innerHTML = '<div class="empty">Failed to load data. Check your token and Notion connections.</div>';
-    btn.classList.remove('loading');
+  btn.classList.remove('loading');
+
+  if (!anySuccess) {
+    document.getElementById('dashContent').innerHTML =
+      `<div class="empty">Could not load data from Notion.<br>Make sure your integration is connected to all 3 journals:<br><br>Open each journal → <strong>···</strong> → <strong>Connections</strong> → add <strong>Trading Dashboard</strong></div>`;
     return;
   }
 
-  btn.classList.remove('loading');
   render();
-
   const now = new Date();
   document.getElementById('lastUpdated').textContent =
     `Last updated: ${now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} at ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
