@@ -6,208 +6,95 @@
 <title>Trading Dashboard</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0f0f0f;
-    --surface: #181818;
-    --surface2: #222222;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #f0f0f0;
-    --muted: #888;
-    --hint: #555;
-    --green: #22c97a;
-    --green-bg: rgba(34,201,122,0.1);
-    --red: #f05252;
-    --red-bg: rgba(240,82,82,0.1);
-    --amber: #f5a623;
-    --amber-bg: rgba(245,166,35,0.1);
-    --blue: #4d9fff;
-    --gold: #c9a84c;
-    --radius: 10px;
-    --radius-sm: 6px;
+    --bg: #0f0f0f; --surface: #181818; --surface2: #222;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0; --muted: #888; --hint: #555;
+    --green: #22c97a; --green-bg: rgba(34,201,122,0.1);
+    --red: #f05252; --red-bg: rgba(240,82,82,0.1);
+    --amber: #f5a623; --amber-bg: rgba(245,166,35,0.1);
+    --gold: #c9a84c; --radius: 10px; --radius-sm: 6px;
   }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; padding: 20px; min-height: 100vh; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 13px;
-    padding: 20px;
-    min-height: 100vh;
-  }
+  /* TOKEN SCREEN */
+  .token-screen { max-width: 460px; margin: 80px auto; }
+  .token-screen h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .token-screen p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+  .token-screen ol { color: var(--muted); font-size: 12px; line-height: 1.9; padding-left: 18px; margin-bottom: 20px; }
+  .token-screen ol a { color: var(--gold); }
+  .token-input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; margin-bottom: 10px; }
+  .token-input:focus { border-color: var(--gold); }
+  .token-btn { width: 100%; padding: 10px; background: var(--gold); color: #000; font-weight: 600; font-size: 13px; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+  .token-btn:hover { opacity: 0.9; }
+  .token-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+  .token-note { font-size: 11px; color: var(--hint); margin-top: 10px; }
 
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
+  /* DASHBOARD */
+  #dashboard { display: none; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .header-left { display: flex; align-items: center; gap: 10px; }
-
-  .logo {
-    width: 28px; height: 28px; border-radius: 6px;
-    background: var(--gold);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: #000;
-  }
-
-  .header h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .logo { width: 28px; height: 28px; border-radius: 6px; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #000; }
+  .header h1 { font-size: 16px; font-weight: 600; }
   .header p { font-size: 11px; color: var(--muted); margin-top: 1px; }
-
-  .refresh-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--surface); color: var(--muted);
-    cursor: pointer; font-size: 12px; transition: all 0.15s;
-  }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .refresh-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 12px; }
   .refresh-btn:hover { background: var(--surface2); color: var(--text); }
   .refresh-btn.loading { opacity: 0.4; pointer-events: none; }
   .refresh-btn svg { width: 13px; height: 13px; }
   .refresh-btn.loading svg { animation: spin 0.8s linear infinite; }
+  .signout-btn { font-size: 11px; color: var(--hint); background: none; border: none; cursor: pointer; padding: 4px; }
+  .signout-btn:hover { color: var(--muted); }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .tabs {
-    display: flex; gap: 6px; margin-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0;
-  }
-  .tab {
-    padding: 8px 16px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    border: 1px solid transparent; border-bottom: none;
-    background: transparent; color: var(--muted);
-    cursor: pointer; font-size: 12px; font-weight: 500;
-    transition: all 0.15s; position: relative; top: 1px;
-  }
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 8px 16px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; border: 1px solid transparent; border-bottom: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 500; position: relative; top: 1px; }
   .tab:hover { color: var(--text); }
-  .tab.active {
-    background: var(--surface);
-    border-color: var(--border);
-    color: var(--text);
-  }
+  .tab.active { background: var(--surface); border-color: var(--border); color: var(--text); }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px; margin-bottom: 18px;
-  }
-
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-  }
-  .stat-label {
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--hint);
-    margin-bottom: 6px;
-  }
-  .stat-value {
-    font-size: 24px; font-weight: 600;
-    color: var(--text); line-height: 1;
-  }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1; }
   .stat-value.green { color: var(--green); }
   .stat-value.red { color: var(--red); }
   .stat-value.amber { color: var(--amber); }
   .stat-value.sm { font-size: 15px; padding-top: 4px; }
 
   .winbar-section { margin-bottom: 18px; }
-  .section-label {
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--hint);
-    margin-bottom: 8px;
-  }
-  .winbar {
-    height: 8px; border-radius: 4px;
-    overflow: hidden; display: flex;
-    background: var(--surface2);
-  }
-  .winbar-win { background: var(--green); transition: width 0.5s ease; }
-  .winbar-loss { background: var(--red); transition: width 0.5s ease; }
-  .winbar-be { background: var(--amber); transition: width 0.5s ease; }
-  .winbar-legend {
-    display: flex; gap: 16px; margin-top: 8px;
-  }
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); margin-bottom: 8px; }
+  .winbar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; background: var(--surface2); }
+  .winbar-win { background: var(--green); }
+  .winbar-loss { background: var(--red); }
+  .winbar-be { background: var(--amber); }
+  .winbar-legend { display: flex; gap: 16px; margin-top: 8px; }
   .leg { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
   .dot { width: 7px; height: 7px; border-radius: 50%; }
 
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-  }
-  .card-title {
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--hint);
-    margin-bottom: 10px;
-  }
-  .card-row {
-    display: flex; justify-content: space-between;
-    align-items: center; padding: 5px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .card-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); margin-bottom: 10px; }
+  .card-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
   .card-row:last-child { border-bottom: none; }
   .card-row span:first-child { color: var(--muted); }
   .card-row span:last-child { font-weight: 500; }
 
-  .pill {
-    display: inline-block; font-size: 10px;
-    padding: 2px 8px; border-radius: 10px;
-    font-weight: 600;
-  }
+  .pill { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
   .pill-green { background: var(--green-bg); color: var(--green); }
   .pill-red { background: var(--red-bg); color: var(--red); }
   .pill-amber { background: var(--amber-bg); color: var(--amber); }
 
   .all-table-wrap { overflow-x: auto; }
-  table {
-    width: 100%; border-collapse: collapse;
-    font-size: 12px;
-  }
-  thead th {
-    font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--hint);
-    font-weight: 500; text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
-  }
-  tbody td {
-    padding: 10px; border-bottom: 1px solid var(--border);
-    color: var(--text);
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); font-weight: 500; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  tbody td { padding: 10px; border-bottom: 1px solid var(--border); }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover td { background: var(--surface2); }
-  .acc-name { font-weight: 500; font-size: 12px; }
 
-  .empty {
-    text-align: center; padding: 40px 20px;
-    color: var(--muted); font-size: 13px;
-  }
-
-  .loading-msg {
-    text-align: center; padding: 40px;
-    color: var(--muted);
-  }
-  .loading-msg .spinner {
-    width: 24px; height: 24px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
-  }
-
-  .last-updated {
-    font-size: 11px; color: var(--hint);
-    margin-top: 16px; text-align: right;
-  }
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .loading-msg { text-align: center; padding: 40px; color: var(--muted); }
+  .loading-msg .spinner { width: 24px; height: 24px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  .last-updated { font-size: 11px; color: var(--hint); margin-top: 16px; text-align: right; }
 
   @media (max-width: 500px) {
     .two-col { grid-template-columns: 1fr; }
@@ -217,50 +104,164 @@
 </head>
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <div class="logo">T</div>
-    <div>
-      <h1>Trading Dashboard</h1>
-      <p>ERL → IRL · CRT Model</p>
+<!-- TOKEN SETUP SCREEN -->
+<div id="tokenScreen" class="token-screen">
+  <div style="font-size:28px;margin-bottom:16px">📊</div>
+  <h2>Connect to Notion</h2>
+  <p>To pull live trade data from your Notion journals, enter your Notion Internal Integration Token below. It's stored only in your browser — never sent anywhere else.</p>
+  <ol>
+    <li>Go to <a href="https://www.notion.so/profile/integrations" target="_blank">notion.so/profile/integrations</a></li>
+    <li>Click <strong>+ New integration</strong></li>
+    <li>Name it <strong>Trading Dashboard</strong>, click Save</li>
+    <li>Copy the <strong>Internal Integration Token</strong> (starts with <code>ntn_</code> or <code>secret_</code>)</li>
+    <li>Make sure the integration is <strong>connected to your Trading Hub page</strong> in Notion (open page → ••• → Connections → Add)</li>
+  </ol>
+  <input type="password" class="token-input" id="tokenInput" placeholder="ntn_xxxxxxxxxxxxxxxxxxxx" />
+  <button class="token-btn" onclick="saveToken()">Connect & Load Dashboard</button>
+  <div class="token-error" id="tokenError">Invalid token or connection failed. Please check and try again.</div>
+  <div class="token-note">Your token is saved in localStorage and never leaves your browser.</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">T</div>
+      <div>
+        <h1>Trading Dashboard</h1>
+        <p>ERL → IRL · CRT Model</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        Refresh
+      </button>
+      <button class="signout-btn" onclick="signOut()" title="Disconnect">✕ Disconnect</button>
     </div>
   </div>
-  <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-    Refresh
-  </button>
-</div>
 
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('all',this)">All Accounts</button>
-  <button class="tab" onclick="switchTab('6k',this)">Funded $6K</button>
-  <button class="tab" onclick="switchTab('live',this)">Personal Live</button>
-  <button class="tab" onclick="switchTab('prop',this)">Prop Firm</button>
-</div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('all',this)">All Accounts</button>
+    <button class="tab" onclick="switchTab('6k',this)">Funded $6K</button>
+    <button class="tab" onclick="switchTab('live',this)">Personal Live</button>
+    <button class="tab" onclick="switchTab('prop',this)">Prop Firm</button>
+  </div>
 
-<div id="dashContent">
-  <div class="loading-msg"><div class="spinner"></div>Loading trade data...</div>
+  <div id="dashContent">
+    <div class="loading-msg"><div class="spinner"></div>Loading trade data...</div>
+  </div>
+  <div class="last-updated" id="lastUpdated"></div>
 </div>
-
-<div class="last-updated" id="lastUpdated"></div>
 
 <script>
+const DB_IDS = {
+  '6k':   '1ae45bdb-0cbc-4946-90e9-68211f678631',
+  'live': 'a128c186-9656-4d05-b33a-48ae7bce07c2',
+  'prop': 'aeed41ca-6457-4e1a-9767-9d398cc9b814'
+};
 const ACCOUNTS = [
-  { id: '6k',   label: 'Funded $6K',    dsId: '4c9f4a75-7603-436c-9d2f-4e25cde991cb' },
-  { id: 'live', label: 'Personal Live', dsId: 'c0a0f5b5-0c2d-4a38-a518-453d2611e673' },
-  { id: 'prop', label: 'Prop Firm',     dsId: 'f447c5a0-77c2-4066-9dc5-4204a9570b03' }
+  { id: '6k',   label: 'Funded $6K' },
+  { id: 'live', label: 'Personal Live' },
+  { id: 'prop', label: 'Prop Firm' }
 ];
 
 let cache = {};
 let activeTab = 'all';
+let notionToken = '';
 
-function switchTab(tab, el) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  render();
+// ── Auth ──────────────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem('notion_token');
+  if (saved) {
+    notionToken = saved;
+    showDashboard();
+    loadAll();
+  }
 }
 
+function saveToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) return;
+  notionToken = val;
+  localStorage.setItem('notion_token', val);
+  document.getElementById('tokenError').style.display = 'none';
+  showDashboard();
+  loadAll();
+}
+
+function signOut() {
+  localStorage.removeItem('notion_token');
+  notionToken = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('tokenScreen').style.display = 'block';
+  document.getElementById('tokenInput').value = '';
+}
+
+function showDashboard() {
+  document.getElementById('tokenScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+// ── Notion API ────────────────────────────────────────────────────────
+async function fetchAllPages(dbId) {
+  const url = `https://api.notion.com/v1/databases/${dbId}/query`;
+  let results = [], cursor = undefined;
+  do {
+    const body = { page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+      if (resp.status === 401) {
+        document.getElementById('tokenError').style.display = 'block';
+        signOut();
+      }
+      throw new Error(`Notion API error: ${resp.status}`);
+    }
+    const data = await resp.json();
+    results = results.concat(data.results);
+    cursor = data.has_more ? data.next_cursor : undefined;
+  } while (cursor);
+  return results;
+}
+
+function parsePages(pages) {
+  return pages.map(p => {
+    const props = p.properties || {};
+    const get = (key, type) => {
+      const prop = props[key];
+      if (!prop) return null;
+      if (type === 'select') return prop.select?.name || null;
+      if (type === 'multi_select') return (prop.multi_select || []).map(o => o.name);
+      if (type === 'number') return prop.number || null;
+      if (type === 'title') return prop.title?.[0]?.plain_text || null;
+      return null;
+    };
+    return {
+      instrument:  get('Instrument', 'title'),
+      result:      get('Result', 'select'),
+      session:     get('Session', 'select'),
+      plannedRR:   get('Planned (RR)', 'number'),
+      ruleBroken:  get('Rule Broken', 'multi_select') || [],
+      setup:       get('A+ Setup?', 'select'),
+      lotSize:     get('Lot Size', 'number'),
+      entry:       get('Entry', 'number'),
+      exit:        get('Exit', 'number'),
+      sl:          get('SL', 'number'),
+      tp:          get('TP', 'number'),
+    };
+  }).filter(t => t.result); // only logged trades
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────
 function calcStats(trades) {
   const total = trades.length;
   if (!total) return null;
@@ -273,37 +274,30 @@ function calcStats(trades) {
   const bestRR = rrs.length ? Math.max(...rrs).toFixed(1) : '—';
   const avgRR  = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(1) : '—';
 
-  const count = obj => { const o={}; obj.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
-  const top = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+  const count = arr => { const o={}; arr.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
+  const top   = obj  => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
 
-  const sessions   = count(trades.map(t=>t.session));
-  const instruments= count(trades.map(t=>t.instrument));
-  const setups     = count(trades.map(t=>t.setup));
-  const rules      = count(trades.flatMap(t=>t.ruleBroken||[]));
-  const totalBreaks= Object.values(rules).reduce((a,b)=>a+b,0);
+  const sessions    = count(trades.map(t=>t.session));
+  const instruments = count(trades.map(t=>t.instrument));
+  const setups      = count(trades.map(t=>t.setup));
+  const rules       = count(trades.flatMap(t=>t.ruleBroken||[]));
+  const totalBreaks = Object.values(rules).reduce((a,b)=>a+b,0);
 
-  return {
-    total, wins, losses, be, winRate,
-    bestRR, avgRR,
-    topSession: top(sessions),
-    topPair: top(instruments),
-    topSetup: top(setups),
-    topRule: top(rules),
-    totalBreaks,
-    rules,
-    sessions, instruments
-  };
+  return { total, wins, losses, be, winRate, bestRR, avgRR,
+    topSession: top(sessions), topPair: top(instruments),
+    topSetup: top(setups), topRule: top(rules),
+    totalBreaks, rules, sessions, instruments };
 }
 
+// ── Render ────────────────────────────────────────────────────────────
 function renderSingle(stats, label) {
-  if (!stats || stats.total === 0) {
-    return `<div class="empty">No trades logged yet for <strong>${label}</strong>.<br>Start logging trades to see your stats here.</div>`;
-  }
+  if (!stats || stats.total === 0)
+    return `<div class="empty">No trades logged yet for <strong>${label}</strong>.<br>Start logging trades to see stats here.</div>`;
+
   const wrClass = stats.winRate >= 55 ? 'green' : stats.winRate >= 45 ? 'amber' : 'red';
   const wPct = ((stats.wins/stats.total)*100).toFixed(1);
   const lPct = ((stats.losses/stats.total)*100).toFixed(1);
   const bPct = ((stats.be/stats.total)*100).toFixed(1);
-
   const topRules = Object.entries(stats.rules).sort((a,b)=>b[1]-a[1]).slice(0,3);
   const topPairs = Object.entries(stats.instruments).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
@@ -314,11 +308,10 @@ function renderSingle(stats, label) {
       <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${stats.wins}</div></div>
       <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${stats.losses}</div></div>
       <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${stats.be}</div></div>
-      <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${stats.bestRR}</div></div>
-      <div class="stat"><div class="stat-label">Avg RR</div><div class="stat-value">${stats.avgRR}</div></div>
+      <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${stats.bestRR}R</div></div>
+      <div class="stat"><div class="stat-label">Avg RR</div><div class="stat-value">${stats.avgRR}R</div></div>
       <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${stats.totalBreaks>0?'red':'green'}">${stats.totalBreaks}</div></div>
     </div>
-
     <div class="winbar-section">
       <div class="section-label">Result breakdown</div>
       <div class="winbar">
@@ -332,39 +325,31 @@ function renderSingle(stats, label) {
         <div class="leg"><div class="dot" style="background:#f5a623"></div>${stats.be} BE (${bPct}%)</div>
       </div>
     </div>
-
     <div class="two-col">
       <div class="card">
         <div class="card-title">Top instruments</div>
-        ${topPairs.length
-          ? topPairs.map(([p,c])=>`<div class="card-row"><span>${p}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('')
-          : '<div class="card-row"><span>No data</span><span>—</span></div>'}
+        ${topPairs.length ? topPairs.map(([p,c])=>`<div class="card-row"><span>${p}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') : '<div class="card-row"><span>No data</span><span>—</span></div>'}
       </div>
       <div class="card">
         <div class="card-title">Session breakdown</div>
-        ${Object.entries(stats.sessions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`<div class="card-row"><span>${s}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('')
-          || '<div class="card-row"><span>No data</span><span>—</span></div>'}
+        ${Object.entries(stats.sessions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`<div class="card-row"><span>${s}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') || '<div class="card-row"><span>No data</span><span>—</span></div>'}
       </div>
       <div class="card">
         <div class="card-title">Setup quality</div>
-        <div class="card-row"><span>Top setup grade</span><span>${stats.topSetup}</span></div>
-        <div class="card-row"><span>Best RR hit</span><span>${stats.bestRR}R</span></div>
+        <div class="card-row"><span>Top grade</span><span>${stats.topSetup}</span></div>
+        <div class="card-row"><span>Best RR</span><span>${stats.bestRR}R</span></div>
         <div class="card-row"><span>Avg RR</span><span>${stats.avgRR}R</span></div>
       </div>
       <div class="card">
         <div class="card-title">Most broken rules</div>
-        ${topRules.length
-          ? topRules.map(([r,c])=>`<div class="card-row"><span title="${r}">${r.length>22?r.slice(0,22)+'…':r}</span><span class="pill pill-red">${c}x</span></div>`).join('')
-          : '<div class="card-row"><span>No rules broken</span><span class="pill pill-green">Clean</span></div>'}
+        ${topRules.length ? topRules.map(([r,c])=>`<div class="card-row"><span title="${r}">${r.length>22?r.slice(0,22)+'…':r}</span><span class="pill pill-red">${c}x</span></div>`).join('') : '<div class="card-row"><span>No rules broken</span><span class="pill pill-green">Clean ✓</span></div>'}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderAll() {
   const all = Object.values(cache).flat();
   const combined = calcStats(all);
-
   let html = '';
 
   if (combined && combined.total > 0) {
@@ -379,7 +364,7 @@ function renderAll() {
         <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${combined.wins}</div></div>
         <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${combined.losses}</div></div>
         <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${combined.be}</div></div>
-        <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${combined.bestRR}</div></div>
+        <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${combined.bestRR}R</div></div>
         <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${combined.totalBreaks>0?'red':'green'}">${combined.totalBreaks}</div></div>
         <div class="stat"><div class="stat-label">Top Pair</div><div class="stat-value sm">${combined.topPair}</div></div>
       </div>
@@ -395,79 +380,53 @@ function renderAll() {
           <div class="leg"><div class="dot" style="background:#f05252"></div>${combined.losses} Loss</div>
           <div class="leg"><div class="dot" style="background:#f5a623"></div>${combined.be} BE</div>
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
-  html += `
-    <div class="section-label" style="margin-bottom:10px">Per account</div>
-    <div class="all-table-wrap">
-    <table>
+  html += `<div class="section-label" style="margin-bottom:10px">Per account</div>
+    <div class="all-table-wrap"><table>
       <thead><tr>
         <th>Account</th><th>Trades</th><th>Win Rate</th><th>Wins</th><th>Losses</th><th>BE</th><th>Best RR</th><th>Avg RR</th><th>Rules Broken</th><th>Top Pair</th>
-      </tr></thead>
-      <tbody>
-  `;
+      </tr></thead><tbody>`;
 
   ACCOUNTS.forEach(acc => {
     const s = calcStats(cache[acc.id] || []);
     if (!s || s.total === 0) {
-      html += `<tr><td class="acc-name">${acc.label}</td><td colspan="9" style="color:#555">No trades yet</td></tr>`;
+      html += `<tr><td style="font-weight:500">${acc.label}</td><td colspan="9" style="color:#555">No trades yet</td></tr>`;
     } else {
       const wrc = s.winRate >= 55 ? 'pill-green' : s.winRate >= 45 ? 'pill-amber' : 'pill-red';
       html += `<tr>
-        <td class="acc-name">${acc.label}</td>
+        <td style="font-weight:500">${acc.label}</td>
         <td>${s.total}</td>
         <td><span class="pill ${wrc}">${s.winRate}%</span></td>
         <td style="color:#22c97a">${s.wins}</td>
         <td style="color:#f05252">${s.losses}</td>
         <td style="color:#f5a623">${s.be}</td>
-        <td>${s.bestRR}</td>
-        <td>${s.avgRR}</td>
+        <td>${s.bestRR}R</td>
+        <td>${s.avgRR}R</td>
         <td style="color:${s.totalBreaks>0?'#f05252':'#22c97a'}">${s.totalBreaks}</td>
         <td>${s.topPair}</td>
       </tr>`;
     }
   });
-
   html += `</tbody></table></div>`;
   return html;
 }
 
 function render() {
   const el = document.getElementById('dashContent');
-  if (activeTab === 'all') {
-    el.innerHTML = renderAll();
-  } else {
+  if (activeTab === 'all') { el.innerHTML = renderAll(); }
+  else {
     const acc = ACCOUNTS.find(a => a.id === activeTab);
-    const trades = cache[acc.id] || [];
-    el.innerHTML = renderSingle(calcStats(trades), acc.label);
+    el.innerHTML = renderSingle(calcStats(cache[acc.id] || []), acc.label);
   }
 }
 
-async function fetchTrades(acc) {
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: 'You query a Notion trading journal and return JSON only. Return a JSON array of trade objects with: instrument (string), result ("Win"/"Loss"/"Breakeven"), session (string), plannedRR (number or null), ruleBroken (array of strings), setup (string). Return ONLY the raw JSON array, no markdown, no explanation.',
-        messages: [{ role: 'user', content: `Query Notion data source collection://${acc.dsId} and return all trade entries as JSON.` }],
-        mcp_servers: [{ type: 'url', url: 'https://mcp.notion.com/mcp', name: 'notion-mcp' }]
-      })
-    });
-    const data = await resp.json();
-    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const clean = text.replace(/```json|```/g,'').trim();
-    const s = clean.indexOf('['), e = clean.lastIndexOf(']');
-    if (s === -1 || e === -1) return [];
-    return JSON.parse(clean.slice(s, e+1));
-  } catch(err) {
-    console.error(acc.label, err);
-    return [];
-  }
+function switchTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  render();
 }
 
 async function loadAll() {
@@ -475,19 +434,30 @@ async function loadAll() {
   btn.classList.add('loading');
   document.getElementById('dashContent').innerHTML = '<div class="loading-msg"><div class="spinner"></div>Fetching live data from Notion...</div>';
 
-  await Promise.all(ACCOUNTS.map(async acc => {
-    cache[acc.id] = await fetchTrades(acc);
-  }));
+  const results = await Promise.allSettled(
+    ACCOUNTS.map(async acc => {
+      const pages = await fetchAllPages(DB_IDS[acc.id]);
+      cache[acc.id] = parsePages(pages);
+    })
+  );
+
+  // check for errors
+  const failed = results.filter(r => r.status === 'rejected');
+  if (failed.length === ACCOUNTS.length) {
+    document.getElementById('dashContent').innerHTML = '<div class="empty">Failed to load data. Check your token and Notion connections.</div>';
+    btn.classList.remove('loading');
+    return;
+  }
 
   btn.classList.remove('loading');
   render();
 
   const now = new Date();
   document.getElementById('lastUpdated').textContent =
-    `Last updated: ${now.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})} at ${now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}`;
+    `Last updated: ${now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} at ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
 }
 
-loadAll();
+init();
 </script>
 </body>
 </html>
