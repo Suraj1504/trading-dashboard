@@ -17,17 +17,17 @@
   }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; padding: 20px; min-height: 100vh; }
 
-  .token-screen { max-width: 460px; margin: 60px auto; }
-  .token-screen h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .token-screen { max-width: 480px; margin: 60px auto; }
+  .token-screen h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
   .token-screen p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
-  .token-screen ol { color: var(--muted); font-size: 12px; line-height: 2; padding-left: 18px; margin-bottom: 20px; }
+  .token-screen ol { color: var(--muted); font-size: 12px; line-height: 2.2; padding-left: 18px; margin-bottom: 20px; }
   .token-screen ol a { color: var(--gold); }
-  .token-input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; margin-bottom: 10px; }
+  .token-input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; margin-bottom: 10px; font-family: monospace; }
   .token-input:focus { border-color: var(--gold); }
-  .token-btn { width: 100%; padding: 10px; background: var(--gold); color: #000; font-weight: 600; font-size: 13px; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+  .token-btn { width: 100%; padding: 11px; background: var(--gold); color: #000; font-weight: 700; font-size: 13px; border: none; border-radius: var(--radius-sm); cursor: pointer; }
   .token-btn:hover { opacity: 0.9; }
-  .token-error { color: var(--red); font-size: 12px; margin-top: 10px; padding: 10px; background: var(--red-bg); border-radius: var(--radius-sm); display: none; }
-  .token-note { font-size: 11px; color: var(--hint); margin-top: 10px; line-height: 1.6; }
+  .token-error { color: var(--red); font-size: 12px; margin-top: 10px; padding: 10px 12px; background: var(--red-bg); border-radius: var(--radius-sm); display: none; line-height: 1.6; }
+  .token-note { font-size: 11px; color: var(--hint); margin-top: 12px; line-height: 1.7; }
 
   #dashboard { display: none; }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -104,20 +104,17 @@
 <div id="tokenScreen" class="token-screen">
   <div style="font-size:32px;margin-bottom:16px">📊</div>
   <h2>Connect to Notion</h2>
-  <p>Enter your Notion Internal Integration Token to pull live trade data from your journals.</p>
+  <p>Enter your Notion Internal Integration Token to load live trade data from your journals.</p>
   <ol>
     <li>Go to <a href="https://www.notion.so/profile/integrations" target="_blank">notion.so/profile/integrations</a></li>
-    <li>Click <strong>+ New integration</strong> → name it <strong>Trading Dashboard</strong> → Save</li>
-    <li>Copy the token shown (starts with <code>ntn_</code>)</li>
-    <li>In Notion, open each of your 3 journals → click <strong>···</strong> top right → <strong>Connections</strong> → add <strong>Trading Dashboard</strong></li>
-    <li>Paste the token below and connect</li>
+    <li>Open your <strong>Trading Dashboard</strong> integration</li>
+    <li>Copy the <strong>Internal Integration Token</strong></li>
+    <li>Make sure the integration is connected to all 3 journals in Notion<br><small>(Open each journal → ··· → Connections → Trading Dashboard)</small></li>
   </ol>
   <input type="password" class="token-input" id="tokenInput" placeholder="ntn_xxxxxxxxxxxxxxxxxxxxxxxx" />
-  <button class="token-btn" onclick="saveToken()">Connect & Load Dashboard</button>
+  <button class="token-btn" id="connectBtn" onclick="saveToken()">Connect & Load Dashboard</button>
   <div class="token-error" id="tokenError"></div>
-  <div class="token-note">
-    ⚠️ Your token is stored only in your browser's localStorage. It is never sent to any server other than Notion's official API.
-  </div>
+  <div class="token-note">🔒 Token is saved in your browser only. Never sent to any third-party server.</div>
 </div>
 
 <div id="dashboard">
@@ -140,17 +137,13 @@
       <button class="signout-btn" onclick="signOut()">✕ Disconnect</button>
     </div>
   </div>
-
   <div class="tabs">
     <button class="tab active" onclick="switchTab('all',this)">All Accounts</button>
     <button class="tab" onclick="switchTab('6k',this)">Funded $6K</button>
     <button class="tab" onclick="switchTab('live',this)">Personal Live</button>
     <button class="tab" onclick="switchTab('prop',this)">Prop Firm</button>
   </div>
-
-  <div id="dashContent">
-    <div class="loading-msg"><div class="spinner"></div>Loading...</div>
-  </div>
+  <div id="dashContent"><div class="loading-msg"><div class="spinner"></div>Loading...</div></div>
   <div class="last-updated" id="lastUpdated"></div>
 </div>
 
@@ -165,34 +158,42 @@ const ACCOUNTS = [
   { id: 'live', label: 'Personal Live' },
   { id: 'prop', label: 'Prop Firm' }
 ];
-// CORS proxy — forwards requests to Notion API with proper headers
-const PROXY = 'https://corsproxy.io/?url=';
+
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://proxy.cors.sh/${url}`,
+];
 
 let cache = {};
 let activeTab = 'all';
 let notionToken = '';
 
 function init() {
-  const saved = localStorage.getItem('nd_token');
+  const saved = localStorage.getItem('nd_tok');
   if (saved) { notionToken = saved; showDashboard(); loadAll(); }
 }
 
 function saveToken() {
   const val = document.getElementById('tokenInput').value.trim();
-  if (!val) return;
+  if (!val || (!val.startsWith('ntn_') && !val.startsWith('secret_'))) {
+    showErr('Token should start with ntn_ or secret_. Please check and try again.');
+    return;
+  }
   notionToken = val;
-  localStorage.setItem('nd_token', val);
+  localStorage.setItem('nd_tok', val);
+  document.getElementById('tokenError').style.display = 'none';
   showDashboard();
   loadAll();
 }
 
 function signOut() {
-  localStorage.removeItem('nd_token');
-  notionToken = '';
-  cache = {};
+  localStorage.removeItem('nd_tok');
+  notionToken = ''; cache = {};
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('tokenScreen').style.display = 'block';
   document.getElementById('tokenInput').value = '';
+  document.getElementById('tokenError').style.display = 'none';
 }
 
 function showDashboard() {
@@ -200,98 +201,114 @@ function showDashboard() {
   document.getElementById('dashboard').style.display = 'block';
 }
 
-function showError(msg) {
+function showErr(msg) {
   const el = document.getElementById('tokenError');
-  el.style.display = 'block';
-  el.textContent = msg;
+  el.textContent = msg; el.style.display = 'block';
 }
 
-// ── Notion API via CORS proxy ─────────────────────────────────────────
-async function queryDB(dbId) {
-  const targetUrl = `https://api.notion.com/v1/databases/${dbId}/query`;
-  const proxyUrl  = PROXY + encodeURIComponent(targetUrl);
-  let results = [], cursor;
+async function notionPost(path, body) {
+  const targetUrl = `https://api.notion.com${path}`;
+  let lastErr;
+  for (const makeProxy of PROXIES) {
+    try {
+      const proxyUrl = makeProxy(targetUrl);
+      const resp = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${notionToken}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+          'x-requested-with': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(body)
+      });
+      const text = await resp.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { continue; }
+      if (resp.ok) return data;
+      if (data.status === 401) throw new Error('INVALID_TOKEN');
+      if (data.status === 403) throw new Error('NOT_CONNECTED');
+      lastErr = data.message || `HTTP ${resp.status}`;
+    } catch(e) {
+      if (e.message === 'INVALID_TOKEN' || e.message === 'NOT_CONNECTED') throw e;
+      lastErr = e.message;
+      continue;
+    }
+  }
+  throw new Error(lastErr || 'All proxies failed');
+}
 
+async function queryDB(dbId) {
+  let results = [], cursor;
   do {
     const body = { page_size: 100 };
     if (cursor) body.start_cursor = cursor;
-
-    const resp = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      if (resp.status === 401) {
-        showError('Invalid token. Please disconnect and re-enter your Notion token.');
-        signOut();
-      } else if (resp.status === 403) {
-        showError(`Access denied for database ${dbId}. Make sure your integration is connected to all 3 journals in Notion (··· → Connections).`);
-      }
-      throw new Error(err.message || `HTTP ${resp.status}`);
-    }
-
-    const data = await resp.json();
+    const data = await notionPost(`/v1/databases/${dbId}/query`, body);
     results = results.concat(data.results || []);
     cursor = data.has_more ? data.next_cursor : undefined;
   } while (cursor);
-
   return results;
 }
 
+// Parse pages — Result field no longer exists. Derive outcome from R-Multiple sign.
 function parsePages(pages) {
   return pages.map(p => {
-    const props = p.properties || {};
-    const sel  = k => props[k]?.select?.name || null;
-    const msel = k => (props[k]?.multi_select || []).map(o => o.name);
-    const num  = k => props[k]?.number ?? null;
-    const titl = k => props[k]?.title?.[0]?.plain_text || null;
+    const pr = p.properties || {};
+    const sel  = k => pr[k]?.select?.name || null;
+    const msel = k => (pr[k]?.multi_select || []).map(o => o.name);
+    const num  = k => pr[k]?.number ?? null;
+    const titl = k => pr[k]?.title?.[0]?.plain_text || null;
+    const rMultiple = num('R-Multiple');
     return {
-      instrument: titl('Instrument'),
-      result:     sel('Result'),
-      session:    sel('Session'),
-      plannedRR:  num('Planned (RR)'),
-      ruleBroken: msel('Rule Broken'),
-      setup:      sel('A+ Setup?'),
+      instrument:  titl('Instrument'),
+      session:     sel('Session'),
+      plannedRR:   num('Planned RR'),
+      rMultiple:   rMultiple,
+      ruleBroken:  msel('Rule Broken'),
+      setup:       sel('A+ Setup?'),
     };
-  }).filter(t => t.result);
+  }).filter(t => t.rMultiple !== null && t.rMultiple !== undefined);
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────
+// ── Stats — derive Win/Loss/BE from R-Multiple sign ─────────────────────
 function calcStats(trades) {
   const total = trades.length;
   if (!total) return null;
-  const wins   = trades.filter(t => t.result === 'Win').length;
-  const losses = trades.filter(t => t.result === 'Loss').length;
-  const be     = trades.filter(t => t.result === 'Breakeven').length;
+
+  const wins   = trades.filter(t => t.rMultiple > 0).length;
+  const losses = trades.filter(t => t.rMultiple < 0).length;
+  const be     = trades.filter(t => t.rMultiple === 0).length;
   const winRate = Math.round((wins / total) * 100);
-  const rrs    = trades.map(t => parseFloat(t.plannedRR)).filter(r => r > 0);
-  const bestRR = rrs.length ? Math.max(...rrs).toFixed(1) : '—';
-  const avgRR  = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(1) : '—';
-  const count  = arr => { const o={}; arr.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
-  const top    = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+
+  const netR = trades.reduce((sum, t) => sum + (t.rMultiple || 0), 0);
+  const avgR = total > 0 ? (netR / total) : 0;
+
+  const plannedRRs = trades.map(t => parseFloat(t.plannedRR)).filter(r => r > 0);
+  const bestPlannedRR = plannedRRs.length ? Math.max(...plannedRRs).toFixed(1) : '—';
+
+  const bestWinR = wins > 0 ? Math.max(...trades.filter(t=>t.rMultiple>0).map(t=>t.rMultiple)).toFixed(2) : '—';
+
+  const count = arr => { const o={}; arr.forEach(k=>{ if(k) o[k]=(o[k]||0)+1; }); return o; };
+  const top   = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+
   const sessions    = count(trades.map(t=>t.session));
   const instruments = count(trades.map(t=>t.instrument));
-  const rules       = count(trades.flatMap(t=>t.ruleBroken||[]));
   const setups      = count(trades.map(t=>t.setup));
-  return { total, wins, losses, be, winRate, bestRR, avgRR,
+  const rules       = count(trades.flatMap(t=>t.ruleBroken||[]));
+  const totalBreaks = Object.values(rules).reduce((a,b)=>a+b,0);
+
+  return { total, wins, losses, be, winRate, netR: netR.toFixed(2), avgR: avgR.toFixed(2),
+    bestPlannedRR, bestWinR,
     topPair: top(instruments), topSession: top(sessions), topSetup: top(setups),
-    totalBreaks: Object.values(rules).reduce((a,b)=>a+b,0),
-    rules, sessions, instruments };
+    totalBreaks, rules, sessions, instruments };
 }
 
-// ── Render ────────────────────────────────────────────────────────────
 function renderSingle(stats, label) {
   if (!stats || stats.total === 0)
     return `<div class="empty">No trades logged yet for <strong>${label}</strong>.<br>Log your first trade in Notion to see stats here.</div>`;
 
   const wrClass = stats.winRate >= 55 ? 'green' : stats.winRate >= 45 ? 'amber' : 'red';
+  const netRClass = parseFloat(stats.netR) > 0 ? 'green' : parseFloat(stats.netR) < 0 ? 'red' : 'amber';
   const wPct = ((stats.wins/stats.total)*100).toFixed(1);
   const lPct = ((stats.losses/stats.total)*100).toFixed(1);
   const bPct = ((stats.be/stats.total)*100).toFixed(1);
@@ -305,12 +322,12 @@ function renderSingle(stats, label) {
       <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${stats.wins}</div></div>
       <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${stats.losses}</div></div>
       <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${stats.be}</div></div>
-      <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${stats.bestRR}R</div></div>
-      <div class="stat"><div class="stat-label">Avg RR</div><div class="stat-value">${stats.avgRR}R</div></div>
+      <div class="stat"><div class="stat-label">Net R</div><div class="stat-value ${netRClass}">${stats.netR}R</div></div>
+      <div class="stat"><div class="stat-label">Avg R / Trade</div><div class="stat-value">${stats.avgR}R</div></div>
       <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${stats.totalBreaks>0?'red':'green'}">${stats.totalBreaks}</div></div>
     </div>
     <div class="winbar-section">
-      <div class="section-label">Result breakdown</div>
+      <div class="section-label">Result breakdown (derived from R-Multiple)</div>
       <div class="winbar">
         <div class="winbar-win" style="width:${wPct}%"></div>
         <div class="winbar-loss" style="width:${lPct}%"></div>
@@ -332,10 +349,10 @@ function renderSingle(stats, label) {
         ${Object.entries(stats.sessions).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([s,c])=>`<div class="card-row"><span>${s}</span><span>${c} trade${c>1?'s':''}</span></div>`).join('') || '<div class="card-row"><span>No data yet</span><span>—</span></div>'}
       </div>
       <div class="card">
-        <div class="card-title">Setup quality</div>
-        <div class="card-row"><span>Top grade</span><span>${stats.topSetup}</span></div>
-        <div class="card-row"><span>Best RR</span><span>${stats.bestRR}R</span></div>
-        <div class="card-row"><span>Avg RR</span><span>${stats.avgRR}R</span></div>
+        <div class="card-title">Performance</div>
+        <div class="card-row"><span>Best win (R)</span><span>${stats.bestWinR}R</span></div>
+        <div class="card-row"><span>Best planned RR</span><span>${stats.bestPlannedRR}</span></div>
+        <div class="card-row"><span>Top setup grade</span><span>${stats.topSetup}</span></div>
       </div>
       <div class="card">
         <div class="card-title">Most broken rules</div>
@@ -353,6 +370,7 @@ function renderAll() {
 
   if (c && c.total > 0) {
     const wrClass = c.winRate >= 55 ? 'green' : c.winRate >= 45 ? 'amber' : 'red';
+    const netRClass = parseFloat(c.netR) > 0 ? 'green' : parseFloat(c.netR) < 0 ? 'red' : 'amber';
     const wPct = ((c.wins/c.total)*100).toFixed(1);
     const lPct = ((c.losses/c.total)*100).toFixed(1);
     const bPct = ((c.be/c.total)*100).toFixed(1);
@@ -363,7 +381,7 @@ function renderAll() {
         <div class="stat"><div class="stat-label">Wins</div><div class="stat-value green">${c.wins}</div></div>
         <div class="stat"><div class="stat-label">Losses</div><div class="stat-value red">${c.losses}</div></div>
         <div class="stat"><div class="stat-label">Breakeven</div><div class="stat-value amber">${c.be}</div></div>
-        <div class="stat"><div class="stat-label">Best RR</div><div class="stat-value">${c.bestRR}R</div></div>
+        <div class="stat"><div class="stat-label">Net R</div><div class="stat-value ${netRClass}">${c.netR}R</div></div>
         <div class="stat"><div class="stat-label">Rules Broken</div><div class="stat-value ${c.totalBreaks>0?'red':'green'}">${c.totalBreaks}</div></div>
         <div class="stat"><div class="stat-label">Top Pair</div><div class="stat-value sm">${c.topPair}</div></div>
       </div>
@@ -385,7 +403,7 @@ function renderAll() {
   html += `<div class="section-label" style="margin-bottom:10px">Per account</div>
     <div class="all-table-wrap"><table>
       <thead><tr>
-        <th>Account</th><th>Trades</th><th>Win Rate</th><th>Wins</th><th>Losses</th><th>BE</th><th>Best RR</th><th>Avg RR</th><th>Rules Broken</th><th>Top Pair</th>
+        <th>Account</th><th>Trades</th><th>Win Rate</th><th>Wins</th><th>Losses</th><th>BE</th><th>Net R</th><th>Avg R</th><th>Rules Broken</th><th>Top Pair</th>
       </tr></thead><tbody>`;
 
   ACCOUNTS.forEach(acc => {
@@ -394,6 +412,7 @@ function renderAll() {
       html += `<tr><td style="font-weight:500">${acc.label}</td><td colspan="9" style="color:#555">No trades yet</td></tr>`;
     } else {
       const wrc = s.winRate >= 55 ? 'pill-green' : s.winRate >= 45 ? 'pill-amber' : 'pill-red';
+      const netRColor = parseFloat(s.netR) > 0 ? '#22c97a' : parseFloat(s.netR) < 0 ? '#f05252' : '#f5a623';
       html += `<tr>
         <td style="font-weight:500">${acc.label}</td>
         <td>${s.total}</td>
@@ -401,7 +420,8 @@ function renderAll() {
         <td style="color:#22c97a">${s.wins}</td>
         <td style="color:#f05252">${s.losses}</td>
         <td style="color:#f5a623">${s.be}</td>
-        <td>${s.bestRR}R</td><td>${s.avgRR}R</td>
+        <td style="color:${netRColor};font-weight:600">${s.netR}R</td>
+        <td>${s.avgR}R</td>
         <td style="color:${s.totalBreaks>0?'#f05252':'#22c97a'}">${s.totalBreaks}</td>
         <td>${s.topPair}</td>
       </tr>`;
@@ -434,6 +454,8 @@ async function loadAll() {
     '<div class="loading-msg"><div class="spinner"></div>Fetching live data from Notion...</div>';
 
   let anySuccess = false;
+  const errors = [];
+
   await Promise.all(ACCOUNTS.map(async acc => {
     try {
       const pages = await queryDB(DB_IDS[acc.id]);
@@ -441,7 +463,13 @@ async function loadAll() {
       anySuccess = true;
     } catch(e) {
       cache[acc.id] = [];
-      console.error(acc.label, e.message);
+      if (e.message === 'INVALID_TOKEN') {
+        errors.push('Invalid token. Please disconnect and reconnect with a valid token.');
+      } else if (e.message === 'NOT_CONNECTED') {
+        errors.push(`Integration not connected to ${acc.label}. Open the journal → ··· → Connections → Trading Dashboard.`);
+      } else {
+        errors.push(`${acc.label}: ${e.message}`);
+      }
     }
   }));
 
@@ -449,7 +477,7 @@ async function loadAll() {
 
   if (!anySuccess) {
     document.getElementById('dashContent').innerHTML =
-      `<div class="empty">Could not load data from Notion.<br>Make sure your integration is connected to all 3 journals:<br><br>Open each journal → <strong>···</strong> → <strong>Connections</strong> → add <strong>Trading Dashboard</strong></div>`;
+      `<div class="empty"><strong>Could not load data.</strong><br><br>${errors.join('<br>')}</div>`;
     return;
   }
 
