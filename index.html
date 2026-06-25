@@ -256,13 +256,22 @@ function parsePages(pages) {
     const pr = p.properties || {};
     const sel  = k => pr[k]?.select?.name || null;
     const msel = k => (pr[k]?.multi_select || []).map(o => o.name);
+    // Plain number fields (Account Balance, Lot Size, Entry, SL, TP, Exit)
     const num  = k => pr[k]?.number ?? null;
+    // Formula fields return their value nested under formula.number / formula.string
+    const fnum = k => {
+      const f = pr[k]?.formula;
+      if (!f) return null;
+      if (f.type === 'number') return f.number;
+      if (f.type === 'string') return f.string ? parseFloat(f.string) : null;
+      return null;
+    };
     const titl = k => pr[k]?.title?.[0]?.plain_text || null;
-    const rMultiple = num('R-Multiple');
+    const rMultiple = fnum('R-Multiple');
     return {
       instrument:  titl('Instrument'),
       session:     sel('Session'),
-      plannedRR:   num('Planned RR'),
+      plannedRR:   fnum('Planned RR'),
       rMultiple:   rMultiple,
       ruleBroken:  msel('Rule Broken'),
       setup:       sel('A+ Setup?'),
